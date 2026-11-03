@@ -93,7 +93,6 @@ LangChain یک chain از اشیاء است که داده درون آن جریا
 LangChain:  chain.invoke() → ... → output  (جریان پنهان)
 Haystack:   Node_A → Node_B → Node_C     (جریان صریح و قابل Audit)
 
-
 | قابلیت | وضعیت | جزئیات عملی |
 |---|---|---|
 | آفلاین | ✅ کامل | بدون وابستگی cloud |
@@ -101,7 +100,7 @@ Haystack:   Node_A → Node_B → Node_C     (جریان صریح و قابل Au
 | Audit | ✅ ذاتی | DAG قابل trace کامل |
 | Breaking Changes | ✅ کم | API نسبتاً پایدار |
 | یادگیری | متوسط | آسان‌تر از LangChain |
-| جامعه | | کوچک‌تر | اما enterprise-focused |
+| جامعه | کوچک‌تر | اما enterprise-focused |
 
 #### بنچمارک مرجع
 
@@ -134,7 +133,6 @@ Haystack:   Node_A → Node_B → Node_C     (جریان صریح و قابل Au
                      LangChainAdapter.complete()
                               ↓
                      langchain.chain.invoke()
-
 
 اگر Domain Logic شما مستقیم LangChain import کند، در نسخه بعدی API که Breaking Change بیاید، کل codebase شما باید بازنویسی شود.
 
@@ -177,7 +175,6 @@ LangGraph State Machine:
                                    ↓ بله
                             [Generation Node] → [کاربر]
 
-
 | قابلیت | وضعیت | جزئیات عملی |
 |---|---|---|
 | Stateful Agents | ✅ بهترین | حافظه بین چرخه‌ها |
@@ -218,7 +215,6 @@ LangGraph State Machine:
         │       └── جمله‌های کلیدی (Leaf)
         └── جدول ۱.۲ (Node)  ← اینجا فریم‌ورک‌های دیگر شکست می‌خورند
                 └── سلول‌های تحلیل‌شده (Leaf)
-
 
 | قابلیت | وضعیت | جزئیات عملی |
 |---|---|---|
@@ -262,7 +258,6 @@ DSPy را نمی‌توان با LlamaIndex یا Haystack مقایسه کرد چ
 │  DSPy: Prompt را Compile می‌کند   │
 └────────────────────────────────────┘
 
-
 | قابلیت | وضعیت | جزئیات عملی |
 |---|---|---|
 | آفلاین | ✅ کامل | Local LMs |
@@ -274,7 +269,7 @@ DSPy را نمی‌توان با LlamaIndex یا Haystack مقایسه کرد چ
 
 | معیار | نتیجه | شرایط آزمایش |
 |---|---|---|
-| Latency inter_token | 3.53ms | DSPy compiled module، GPU |
+| Latency | 3.53ms | DSPy compiled module، GPU |
 | بهبود کیفیت Prompt | 15-30% | نسبت به دستی |
 | منبع | Stanford DSPy Paper 2024 | |
 
@@ -306,7 +301,7 @@ class PersianTextSplitter(TextSplitter):
     Text Splitter بهینه برای زبان فارسی.
     
     جایگاه در معماری: لایه Ingestion (قبل از Embedding)
-       واب    وابستگی: hazm >= 0.9.0
+    وابستگی: hazm >= 0.9.0
     
     مثال استفاده:
         splitter = PersianTextSplitter(chunk_size=512, chunk_overlap=50)
