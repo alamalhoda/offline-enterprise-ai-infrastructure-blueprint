@@ -2,6 +2,7 @@
 
 ## Single Source of Truth (SSOT)
 
+
 **منبع واحد حقیقت:** GitHub Repository — شاخه `main`  
 آدرس ریپوزیتوری:  
 https://github.com/salimusavi02/offline-enterprise-ai-infrastructure-blueprint
