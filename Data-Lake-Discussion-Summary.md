@@ -1,3 +1,6 @@
+Version: 1.0
+Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+
 # خلاصه گفت‌وگو: آشنایی با Data Lake و افزودن آن به پروژه
 ## offline-enterprise-ai-infrastructure-blueprint
 

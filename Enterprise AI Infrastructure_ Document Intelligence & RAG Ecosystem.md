@@ -1,3 +1,6 @@
+Version: 1.1
+Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+
 # Enterprise AI Infrastructure: Document Intelligence & RAG Ecosystem
 
 **Status:** Draft | **Version:** 1.1 | **Environment:** Air-Gapped / CPU-Only

@@ -1,3 +1,6 @@
+Version: 1.5
+Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+
 # SINA — Secure Intelligent Network Assistant
 
 ## LLMOps / MLOps Framework
@@ -10,7 +13,7 @@
 | تاریخ | بهمن ۱۴۰۴ / فوریه ۲۰۲۶ |
 | محیط | Air-Gapped / CPU-Only / آفلاین کامل |
 | مخاطب | Backend Team / ML Engineers / DevOps |
-| مرجع | هم‌راستا با **SINA_Roadmap_v1.5**، **SINA_SprintPlan** و **SINA_RiskQA**؛ مسیر Model Vault، معیارهای کیفیت و Observability با نقشه راه و برنامه Sprint یکسان است. |
+| مرجع | هم‌راستا با **RoadMap_1.md**، **SINA_SprintPlan** و **SINA_RiskQA**؛ مسیر Model Vault، معیارهای کیفیت و Observability با نقشه راه و برنامه Sprint یکسان است. |
 
 ---
 
@@ -137,4 +140,4 @@ Model Vault یک ساختار پوشه‌ای استاندارد شده در س�
 
 ---
 
-*مستند: SINA LLMOps v1.0 — Draft | هم‌راستا با SINA_Roadmap_v1.5، SINA_SprintPlan و SINA_RiskQA | بهمن ۱۴۰۴ / فوریه ۲۰۲۶*
+*مستند: SINA LLMOps v1.0 — Draft | هم‌راستا با RoadMap_1.md، SINA_SprintPlan و SINA_RiskQA | بهمن ۱۴۰۴ / فوریه ۲۰۲۶*

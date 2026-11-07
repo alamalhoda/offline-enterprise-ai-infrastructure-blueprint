@@ -1,3 +1,6 @@
+Version: 2.0
+Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+
 # SINA — Roadmap کلان (نسخه ۲.۰)
 ### Secure Intelligent Network Assistant | با Milestone و Quality Gate کامل | 1404/12/04
 

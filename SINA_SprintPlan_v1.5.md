@@ -1,3 +1,6 @@
+Version: 1.5
+Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+
 # SINA — Secure Intelligent Network Assistant
 
 ## برنامه Sprint و چرخه‌های Agile
@@ -8,12 +11,12 @@
 
 | مورد | مقدار |
 |------|--------|
-| نسخه مستند | 1.5 — هم‌راستا با SINA_Roadmap_v1.5 |
+| نسخه مستند | 1.5 — هم‌راستا با RoadMap_1.md |
 | تاریخ | بهمن ۱۴۰۴ / فوریه ۲۰۲۶ |
 | متدولوژی | Scrum — Sprint دو هفته‌ای |
 | پوشش | Phase 0 (S1–S2) + Phase 1 (S3–S12) + Phase 2 (S13–S22) |
 | تیم | Backend/Infra + Frontend/UI (ML/DevOps/QA جاسازی‌شده) |
-| مرجع اصلی | SINA_Roadmap_v1.5 — تمام Gate‌ها، تعریف Done و Milestone‌ها از نقشه راه |
+| مرجع اصلی | RoadMap_1.md — تمام Gate‌ها، تعریف Done و Milestone‌ها از نقشه راه |
 
 ---
 
@@ -31,7 +34,7 @@
 | Sprint Retrospective | روز آخر — ۱.۵ ساعت | چه خوب بود؟ چه بهبود یابد؟ Action Item مشخص |
 | Backlog Refinement | میانه Sprint — ۲ ساعت | پاکسازی و اولویت‌بندی User Stories Sprint بعدی |
 
-### ۱.۲ تعریف Done — مطابق SINA_Roadmap_v1.5
+### ۱.۲ تعریف Done — مطابق RoadMap_1.md
 
 این تعریف Done مستقیماً از بخش ۱۰ نقشه راه (سطح Task و Sprint) اخذ شده است:
 
@@ -41,4 +44,4 @@
 
 ---
 
-*مستند: SINA Sprint Plan v1.2 — هم‌راستا با SINA_Roadmap_v1.5 | بهمن ۱۴۰۴ / فوریه ۲۰۲۶*
+*مستند: SINA Sprint Plan v1.2 — هم‌راستا با RoadMap_1.md | بهمن ۱۴۰۴ / فوریه ۲۰۲۶*
