@@ -42,7 +42,7 @@ Kilo (مFactor توسعه)
 | موتور قطعه‌بندی هوشمند متون سازمانی فارسی.md | موتور قطعه‌بندی متون فارسی (HLD، ۴ زیرسیستم، کد، تست) |
 | Data-Lake-Discussion-Summary.md | Data Lake (مستند مستقل) |
 | مستند بهبودیافته_ ابزارهای RAG و AI Agent.md | ابزارهای RAG و AI Agent (نسخه ۳.۰) |
-| RoadMap_1.md | نقشه راه SINA (نسخه ۲.۰) |
+| SINA_Roadmap_v1.5.md | نقشه راه SINA (نسخه ۲.۰) |
 | SINA_SprintPlan_v1.5.md | برنامه Sprint و فرآیند Agile/Scrum |
 | SINA_RiskQA_v1.5.md | ثبت ریسک‌ها و چارچوب کیفیت (QA) |
 | SINA_LLMOps_v1.5.md | LLPOps در محیط آفلاین |
@@ -56,7 +56,7 @@ Kilo (مFactor توسعه)
 | زیرساخت هوش مصنوعی سازمانی.md | خلاصه تکراری | Enterprise AI Infrastructure... |
 | Separation of Concerns(تفکیک دغدغه‌ها).md | تکرار اصل تفکیک دغدغه‌ها | Enterprise AI Infrastructure... |
 | RAG and Agent tools(ابزارها).md | نسخه قدیمی (۱.۱) | مستند بهبودیافته_ ابزارهای RAG و AI Agent.md (نسخه ۳.۰) |
-| SINA_Roadmap_v1.5.md | نسخه قدیمی (۱.۵) | RoadMap_1.md (نسخه ۲.۰) |
+| RoadMap_1.md | نسخه قدیمی (۲.۰) | SINA_Roadmap_v1.5.md (نسخه ۲.۰) |
 | 1-first-promot.md | پرامپت طراحی تاریخی | Enterprise AI Infrastructure... (بخش‌های A–س) |
 
 ## معیار انتخاب منبع حقیقت (Tie-Breaker)
