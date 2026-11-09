@@ -146,7 +146,7 @@ company-data/
 7. Observability / Watchtower
 
 ### تصمیم معماری
-Data Lake به‌عنوان **لایه بنیادین ذخیره‌سازی (Foundational Storage Layer)** در نظر گرفته شد که عمدتاً زیر لایه‌های ۱ تا ۴ قرار می‌گیرد.
+Data Lake به‌عنوان **لایه بنیادین مستقل (Foundational Layer: Data Lake)** در نظر گرفته شد که زیر تمام لایه‌های معماری (۱ تا ۷) قرار می‌گیرد و نه زیرمجموعه لایه Storage. لایه‌های بالاتر (Ingestion, Processing, Embedding, Hybrid Index, RAG Orchestration, API, Observability) از Data Lake استفاده می‌کنند (consumer) و Data Lake منبع حقیقت (Source of Truth) است.
 
 ```text
 [ لایه ۷: Observability ]
@@ -157,8 +157,13 @@ Data Lake به‌عنوان **لایه بنیادین ذخیره‌سازی (Fou
 [ لایه ۲: Processing ]
 [ لایه ۱: Ingestion ]
 ────────────────────────────────
-[ Data Lake - لایه بنیادین ذخیره‌سازی ]
+[ Foundational Layer: Data Lake ]
+   ├── Raw Zone
+   ├── Processed Zone
+   └── Curated / Entity Zone
 ```
+
+Data Lake لایه بنیادین مستقل است و لایه‌های بالای آن مصرف‌کننده آن هستند. تمام ایندکس‌ها (Vector + BM25) از روی Data Lake قابل بازسازی هستند (Rebuild-from-source). جزئیات Zones، Partitioning، Entity-Centric، Catalog و ملاحظات Persian-First فقط در این فایل (SSOT) نگهداری می‌شود.
 
 ---
 
@@ -209,7 +214,7 @@ Data Lake به‌عنوان **لایه بنیادین ذخیره‌سازی (Fou
 ## ۱۰. وضعیت فعلی تصمیم‌گیری
 
 - [x] تعریف Data Lake و کاربرد آن مشخص شد
-- [x] جایگذاری به‌عنوان لایه بنیادین ذخیره‌سازی تأیید شد
+- [x] جایگذاری به‌عنوان لایه بنیادین مستقل (Foundational Layer: Data Lake) تأیید شد
 - [x] رابطه با لایه‌های دیگر Clarified شد
 - [x] ابزارهای پیشنهادی مشخص شد
 - [x] ساختار Buckets (Raw/Processed/Curated) + Partitioning Convention در Sprint 3-4

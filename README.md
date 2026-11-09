@@ -62,7 +62,7 @@ Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
 
 ### نقش Data Lake
 
-Data Lake به عنوان **لایه fundaciónal ذخیره‌سازی** (زیر لایه‌های ۱ تا ۴ معماری) تعریف شده است. فایل مستقل `Data-Lake-Discussion-Summary.md` منبع حقیقت آن است و در اسناد مرتبط (معماری، SINA_Roadmap_v1.5، فایل‌های SINA، End-to-End Data Flow) تنها **خلاصه‌ای کوتاه و لینک به فایل مرجع** درج می‌شود — هرگز تکرار جزئیات Data Lake در آن فایل‌ها.
+Data Lake به عنوان **لایه بنیادین مستقل (Foundational Layer)** زیر لایه‌های معماری (۱ تا ۷) تعریف شده است و نه بخشی از لایه Storage. لایه Storage روی Data Lake ساخته شده است. Data Lake **منبع حقیقت (Source of Truth)** است و تمام ایندکس‌ها (Vector + BM25) از روی آن قابل بازسازی هستند (Rebuild-from-source). جزئیات کامل Zones، Partitioning، Entity-Centric، Catalog و Persian-First فقط در فایل مستقل `Data-Lake-Discussion-Summary.md` نگهداری می‌شود و در اسناد مرتبط تنها با ارجاع کوتاه به آن فایل مرجع ذکر می‌شود — هرگز تکرار جزئیات Data Lake در آن فایل‌ها.
 
 ---
 
@@ -70,21 +70,22 @@ Data Lake به عنوان **لایه fundaciónal ذخیره‌سازی** (زی�
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Layer 8: Observability                     │
+│                    Layer 7: Observability                     │
 ├─────────────────────────────────────────────────────────────┤
-│                    Layer 7: API Gateway                       │
+│                    Layer 6: API Gateway                       │
 ├─────────────────────────────────────────────────────────────┤
-│              Layer 6: RAG Orchestration                       │
+│              Layer 5: RAG Orchestration                       │
 ├─────────────────────────────────────────────────────────────┤
-│        Layer 5: Retrieval & Hybrid Index                      │
+│                    Layer 4: Hybrid Index                      │
 ├─────────────────────────────────────────────────────────────┤
-│        Layer 4: Embedding & Vectorization                     │
+│                    Layer 3: Embedding                         │
 ├─────────────────────────────────────────────────────────────┤
-│   Layer 3: Processing (NLP, Chunking, Normalization)          │
+│   Layer 2: Processing (NLP, Chunking, Normalization)          │
 ├─────────────────────────────────────────────────────────────┤
-│         Layer 2: Ingestion (Watchdog, Hash, Scan)             │
+│         Layer 1: Ingestion (Watchdog, Hash, Scan)             │
 ├─────────────────────────────────────────────────────────────┤
-│    Layer 1: Foundational Data Lake (Raw/Processed/Curated)    │
+│  Foundational Layer: Data Lake (Raw/Processed/Curated)        │
+│  Source of Truth — Indexes rebuildable from Data Lake         │
 └─────────────────────────────────────────────────────────────┘
 ```
 

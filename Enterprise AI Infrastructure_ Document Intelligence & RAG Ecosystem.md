@@ -1,5 +1,5 @@
-Version: 1.1
-Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+Version: 1.2
+Updated: ۱۴۰۴/۰۸/۱۸ (2026-11-09)
 
 # Enterprise AI Infrastructure: Document Intelligence & RAG Ecosystem
 
@@ -15,6 +15,23 @@ This architecture outlines a resilient, backend-agnostic system for managing a l
 
 The system adopts a **Hexagonal Architecture (Ports & Adapters)** to maintain backend agnosticism, allowing seamless integration with frameworks like Django while isolating core logic. This enables extensibility through defined interfaces (ports) for swapping components, such as replacing a vector DB without refactoring.
 
+[ Layer 7: Observability ]
+[ Layer 6: API Gateway ]
+[ Layer 5: RAG Orchestration ]
+[ Layer 4: Hybrid Index ]
+[ Layer 3: Embedding ]
+[ Layer 2: Processing ]
+[ Layer 1: Ingestion ]
+────────────────────────────────
+[ Foundational Layer: Data Lake ]
+   ├── Raw Zone
+   ├── Processed Zone
+   └── Curated / Entity Zone
+
+The **Foundational Data Lake Layer** is an independent foundation that sits below all seven application layers. It persists raw files, normalized text, Parquet tables, and Entity-Centric documents across three zones, with versioning, partitioning, IAM policies, and ACID metadata via Catalog. It is the **Source of Truth** — all indexes (Vector, BM25) are rebuildable from Data Lake (rebuild-from-source). The **Storage Layer is built on top of the Data Lake**; Data Lake is not a sub-component of Storage.
+
+Zone details, partitioning convention, Catalog design, and Persian-first considerations are defined in `Data-Lake-Discussion-Summary.md` (SSOT).
+
 1. **Ingestion Layer (The "Senses")**
 
    - **Responsibilities:** Monitor file directories for changes, compute hashes, perform offline virus scanning (using pre-loaded definitions), and trigger idempotent ingestion. Handles initial format detection for PDFs/DOCX.
@@ -22,41 +39,36 @@ The system adopts a **Hexagonal Architecture (Ports & Adapters)** to maintain ba
    - **Extensibility:** Ports for custom scanners or additional file formats (e.g., future support for scanned images with Persian OCR).
 2. **Processing Layer (The "Brain" - CPU Optimized)**
 
-   - **Responsibilities:** Extract text/layouts, normalize multilingual content (with Persian-specific rules), chunk documents semantically, and generate embeddings using quantized models. All operations are batched for CPU efficiency.
-   - **Components:** ETL Pipelines, Normalization Engine (Persian-focused), Embedding Service (ONNX Runtime).
+   - **Responsibilities:** Extract text/layouts, normalize multilingual content (with Persian-specific rules), and chunk documents semantically. All operations are batched for CPU efficiency.
+   - **Components:** ETL Pipelines, Normalization Engine (Persian-focused).
    - **Extensibility:** Adapters for new NLP models, ensuring offline loading from local repositories.
-3. **Foundational Data Lake Layer (The "Foundation")**
+3. **Embedding Layer (The "Encoder")**
 
-   - **Responsibilities:** Persist raw files, normalized text, Parquet tables, and Entity-Centric documents across three zones (Raw, Processed, Curated). Provides versioning, partitioning, IAM policies, and ACID metadata via Catalog. Serves as the **Source of Truth** — all indexes (Vector, BM25) are rebuildable from Data Lake.
-   - **Components:** Object Store (MinIO with Raw/Processed/Curated buckets), Metadata Catalog (PostgreSQL / Hive Metastore), Partitioned Parquet Storage, Entity Document Store (Curated Zone).
-   - **Extensibility:** Modular schemas for adding fields like Persian-specific metadata (e.g., script direction); Iceberg-ready for future Lakehouse evolution.
-4. **Indexing Layer (The "Catalog")**
+   - **Responsibilities:** Generate embeddings for normalized chunks using quantized models, batching for CPU efficiency. Produces vectors consumed by the Hybrid Index Layer.
+   - **Components:** Embedding Service (ONNX Runtime), Local Model Registry.
+   - **Extensibility:** Adapters for new embedding models; offline loading from local repositories.
+4. **Hybrid Index Layer (The "Catalog")**
 
-   - **Responsibilities:** Maintain versioned vector and keyword indexes, handle deduplication, and support hybrid fusion. Offline index rebuilds are triggered manually or scheduled.
+   - **Responsibilities:** Maintain versioned vector and keyword (BM25) indexes, handle deduplication, and support hybrid fusion. Offline index rebuilds are triggered manually or scheduled. All indexes are rebuildable from the Foundational Data Lake Layer.
    - **Components:** Index Builder, Version Registry, Deduplication Clusterer.
    - **Extensibility:** Hooks for custom index types or fusion algorithms.
-5. **Retrieval & Ranking Layer (The "Recall")**
+5. **RAG Orchestration Layer (The "Control")**
 
-   - **Responsibilities:** Execute hybrid queries, apply filters (e.g., ACLs), and re-rank results. Optimizes for Persian queries by expanding terms morphologically.
-   - **Components:** Query Planner, Retriever Service, Re-ranker (Cross-Encoder).
-   - **Extensibility:** Pluggable query expanders for additional languages.
-6. **Orchestration & Governance Layer (The "Control")**
-
-   - **Responsibilities:** Schedule background jobs, enforce policies (e.g., retention, ACLs), manage index migrations, and log audits. In offline mode, all orchestration is local with no external dependencies.
-   - **Components:** Workflow Orchestrator, Policy Engine, Audit Logger.
-   - **Extensibility:** Integration ports for enterprise identity providers (e.g., local LDAP).
-7. **API & Interface Layer (The "Interface")**
+   - **Responsibilities:** Schedule background jobs, enforce policies (e.g., retention, ACLs), manage index migrations, execute retrieval and re-ranking, and log audits. In offline mode, all orchestration is local with no external dependencies.
+   - **Components:** Workflow Orchestrator, Policy Engine, Audit Logger, Retriever Service, Re-ranker (Cross-Encoder).
+   - **Extensibility:** Integration ports for enterprise identity providers (e.g., local LDAP); pluggable query expanders for additional languages.
+6. **API Gateway Layer (The "Interface")**
 
    - **Responsibilities:** Expose REST/gRPC endpoints for ingestion/query, validate requests, and stream responses. Supports offline authentication via local tokens.
    - **Components:** API Gateway, Authentication Module.
    - **Extensibility:** Adapters for UI frameworks or additional protocols.
-8. **Observability & Monitoring Layer (The "Eyes")**
+7. **Observability Layer (The "Eyes")**
 
    - **Responsibilities:** Collect metrics/logs offline, detect anomalies (e.g., embedding drift), and provide dashboards. All data stays local.
    - **Components:** Metrics Collector, Log Aggregator, Dashboard Server.
    - **Extensibility:** Exports to file-based reports for air-gapped analysis.
 
-**Separation of Concerns:** Layers communicate via defined interfaces to prevent tight coupling, ensuring that changes in one layer (e.g., new Persian tokenizer) don't propagate. **Extensibility Strategy:** Use dependency injection for components; maintain a local model registry for offline updates, with versioning to avoid disruptions.
+**Separation of Concerns:** Layers communicate via defined interfaces to prevent tight coupling, ensuring that changes in one layer (e.g., new Persian tokenizer) don't propagate. The Foundational Data Lake Layer is the single Source of Truth; upper layers consume it and never mutate the source contract. **Extensibility Strategy:** Use dependency injection for components; maintain a local model registry for offline updates, with versioning to avoid disruptions.
 
 ---
 
@@ -72,16 +84,22 @@ graph TD
        Q --> W1[Ingest Worker (Hashing, Scanning)]
        Q --> W2[Normalize Worker (Persian NLP)]
        Q --> W3[Embed Worker (ONNX, Quantized)]
-       Q --> W4[Entity Worker (Curated Zone)]
-     
-       W1 -- Read/Write --> Raw[MinIO Raw Zone (Raw Files)]
-       W2 -- Write --> Processed[MinIO Processed Zone (Normalized Text, Parquet)]
-       W4 -- Write --> Curated[MinIO Curated Zone (Entity Documents)]
+       Q --> W4[Entity Worker]
        W2 -- Process --> NLP[Multilingual NLP Module (Hazm/DadmaTools)]
        W3 -- Inference --> Models[Local Model Registry (HuggingFace/ONNX Files)]
    end
-  
-   subgraph "Storage & Catalog Plane"
+   
+   subgraph "Foundational Layer: Data Lake (Source of Truth)"
+       Raw[MinIO Raw Zone]
+       Processed[MinIO Processed Zone]
+       Curated[MinIO Curated Zone / Entity Documents]
+   end
+   
+   W1 -- Read/Write --> Raw
+   W2 -- Write --> Processed
+   W4 -- Write --> Curated
+
+   subgraph "Storage Plane (Built on Foundational Data Lake Layer)"
        W1 -- Metadata --> DB[(PostgreSQL - Metadata, Schemas, Catalog)]
        W3 -- Vectors/Keywords --> VDB[(Hybrid Vector DB - Qdrant/OpenSearch)]
        DB -- CDC/Sync --> VDB[Index Version Registry]
@@ -104,7 +122,8 @@ graph TD
 
 **Key Connections:**
 
-- **Data Flow:** Unidirectional from Ingestion → Data Lake (Raw/Processed/Curated) → Indexing/Retrieval; normalized text and Parquet stored in Data Lake for offline re-embedding without re-parsing. **Data Lake is Source of Truth** — all indexes rebuildable from it.
+- **Data Flow:** Unidirectional from Ingestion → Processing → Embedding → Foundational Data Lake Layer (Raw/Processed/Curated) → Hybrid Index/Retrieval; normalized text and Parquet stored in Data Lake for offline re-embedding without re-parsing. **Data Lake is Source of Truth** — all indexes (Vector, BM25) are rebuildable from it (rebuild-from-source).
+- **Storage Relationship:** The Storage Plane (PostgreSQL Catalog + Hybrid Vector DB) is built **on top of** the Foundational Data Lake Layer; Data Lake is not part of Storage.
 - **Control Flow:** Orchestrator triggers jobs via queues; governance intercepts all flows for compliance.
 - **Background Pipelines:** Dedicated queues for re-indexing/migration, running in low-priority mode to avoid CPU contention.
 - **Index Routing:** Queries route to the "active" index version via PostgreSQL registry; during migrations, a router proxies to both old/new indexes for zero-downtime.
@@ -276,11 +295,13 @@ graph TD
 
 ---
 
-## Q. Storage & Data Schema Design (Foundational Data Lake Layer)
+## Q. Storage Layer (Built on Foundational Data Lake Layer)
 
-- **Raw Zone (`minio://raw/`):** Immutable raw files (PDF, DOCX, database dumps). Versioned objects with 90-day retention. Partitioned by `source=` and `ingest_date=`.
-- **Processed Zone (`minio://processed/`):** Normalized text (JSON per chunk with lang tag), Parquet tables from database extracts. Partitioned by `date=YYYY/MM` + `source=erp/crm/hr`. Compressed with zstd.
-- **Curated / Entity Zone (`minio://curated/`):** Entity-Centric Documents (Rich Documents) — denormalized business entities (Customer, Order, Product) as JSON/Parquet for direct RAG consumption.
+The **Storage Layer** is implemented **on top of** the Foundational Data Lake Layer — Data Lake is the foundation and Source of Truth, not a sub-component of Storage. Data Lake zones (Raw / Processed / Curated), partitioning convention, Catalog design, and Persian-first considerations are defined in `Data-Lake-Discussion-Summary.md` (SSOT).
+
+- **Raw Zone (`minio://raw/`):** Immutable raw files; versioned objects; partitioned by `source=` and `ingest_date=`.
+- **Processed Zone (`minio://processed/`):** Normalized text and Parquet tables; partitioned by `date=YYYY/MM` + `source=erp/crm/hr`.
+- **Curated / Entity Zone (`minio://curated/`):** Entity-Centric Documents for direct RAG consumption.
 
 - **Metadata Schema (SQL / Catalog):**
   ```sql
