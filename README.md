@@ -58,7 +58,7 @@ Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
 - **برای برنامه Sprint/Agile:** `SINA_SprintPlan_v1.5.md`.
 - **برای ریسک و کیفیت:** `SINA_RiskQA_v1.5.md`.
 - **برای LLPOps/Model Vault:** `SINA_LLMOps_v1.5.md`.
-- **برای Data Lake:** `Data-Lake-Discussion-Summary.md` (مستند مستقل؛ در فایل‌های معماری، نقشه راه، SINAها و جریان داده فقط به صورت خلاصه و با ارجاع به این فایل Referenced می‌شود).
+- **برای Data Lake:** `Data-Lake-Discussion-Summary.md` (مستند مستقل؛ در فایل‌های معماری، نقشه راه، SINAها و جریان داده فقط به صورت خلاصه و با ارجاع به این فایل Referenced می‌شود) — **بخش ۱۱: Persian-first considerations، بخش ۱۲: Catalog decision، بخش ۱۳: Entity-Centric design**.
 
 ### نقش Data Lake
 

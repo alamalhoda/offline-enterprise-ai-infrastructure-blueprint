@@ -116,9 +116,9 @@
 | Milestone | ماه | Definition of Done |
 |-----------|-----|---------------------|
 | M1.1 — Dev Env | ۱ | Docker Compose up بدون خطا، تمام service‌ها healthy |
-| M1.2 — Storage | ۲ | MinIO، PostgreSQL schema، Qdrant collection آماده؛ Integration Test اولیه (ذخیره/بازیابی) موفق. *Integration Test کامل و Data Quality در S9–S10 (برنامه Sprint) تکمیل می‌شود.* |
+| M1.2 — Storage & Data Lake Foundation | ۲ | MinIO با Bucketهای **raw/، processed/، curated/** + Versioning و Retention Policy؛ Partitioning Convention برای Parquet (date+source)؛ MinIO IAM Policies اولیه per zone؛ PostgreSQL schema، Qdrant collection آماده؛ Integration Test اولیه (ذخیره/بازیابی) موفق. *Integration Test کامل و Data Quality در S9–S10 (برنامه Sprint) تکمیل می‌شود.* |
 | M1.3 — Ingestion | ۳ | PDF/DOCX فارسی آپلود → hash → scan → Queue |
-| M1.4 — NLP | ۴ | متن نرمال‌سازی، ZWNJ حل شده، Chunk‌های معنادار |
+| M1.4 — NLP & Entity-Centric Pipeline Design | ۴ | متن نرمال‌سازی، ZWNJ حل شده، Chunk‌های معنادار؛ **Spike Story: طراحی Pipeline تبدیل جداول نرمال‌شده به Entity Document در Curated Zone** |
 | M1.5 — Embedding | ۵ | مدل ONNX لود، Batch Embedding روی CPU < 5 ثانیه برای ۱۰ chunk |
 | M1.6 — E2E Alpha | ۶ | فایل فارسی → embed → Qdrant → query اولیه جواب دهد |
 

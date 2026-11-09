@@ -25,11 +25,11 @@ The system adopts a **Hexagonal Architecture (Ports & Adapters)** to maintain ba
    - **Responsibilities:** Extract text/layouts, normalize multilingual content (with Persian-specific rules), chunk documents semantically, and generate embeddings using quantized models. All operations are batched for CPU efficiency.
    - **Components:** ETL Pipelines, Normalization Engine (Persian-focused), Embedding Service (ONNX Runtime).
    - **Extensibility:** Adapters for new NLP models, ensuring offline loading from local repositories.
-3. **Storage Layer (The "Memory")**
+3. **Foundational Data Lake Layer (The "Foundation")**
 
-   - **Responsibilities:** Persist raw files, metadata, normalized text, and indexes with ACID guarantees for metadata and eventual consistency for search indexes. Supports offline backups and rebuilds.
-   - **Components:** Object Store (MinIO), Relational DB (PostgreSQL), Vector/Hybrid Index (Qdrant or OpenSearch).
-   - **Extensibility:** Modular schemas for adding fields like Persian-specific metadata (e.g., script direction).
+   - **Responsibilities:** Persist raw files, normalized text, Parquet tables, and Entity-Centric documents across three zones (Raw, Processed, Curated). Provides versioning, partitioning, IAM policies, and ACID metadata via Catalog. Serves as the **Source of Truth** — all indexes (Vector, BM25) are rebuildable from Data Lake.
+   - **Components:** Object Store (MinIO with Raw/Processed/Curated buckets), Metadata Catalog (PostgreSQL / Hive Metastore), Partitioned Parquet Storage, Entity Document Store (Curated Zone).
+   - **Extensibility:** Modular schemas for adding fields like Persian-specific metadata (e.g., script direction); Iceberg-ready for future Lakehouse evolution.
 4. **Indexing Layer (The "Catalog")**
 
    - **Responsibilities:** Maintain versioned vector and keyword indexes, handle deduplication, and support hybrid fusion. Offline index rebuilds are triggered manually or scheduled.
@@ -66,42 +66,45 @@ The system adopts a **Hexagonal Architecture (Ports & Adapters)** to maintain ba
 graph TD
     User[User/Client App] --> API[API Gateway (REST/gRPC)]
     API --> Orch[Orchestrator Service (Workflow Engine)]
+   
+   subgraph "Ingestion & Processing Pipeline (Async, Offline)"
+       Orch --> Q[Task Queue (Redis/RabbitMQ)]
+       Q --> W1[Ingest Worker (Hashing, Scanning)]
+       Q --> W2[Normalize Worker (Persian NLP)]
+       Q --> W3[Embed Worker (ONNX, Quantized)]
+       Q --> W4[Entity Worker (Curated Zone)]
+     
+       W1 -- Read/Write --> Raw[MinIO Raw Zone (Raw Files)]
+       W2 -- Write --> Processed[MinIO Processed Zone (Normalized Text, Parquet)]
+       W4 -- Write --> Curated[MinIO Curated Zone (Entity Documents)]
+       W2 -- Process --> NLP[Multilingual NLP Module (Hazm/DadmaTools)]
+       W3 -- Inference --> Models[Local Model Registry (HuggingFace/ONNX Files)]
+   end
   
-    subgraph "Ingestion & Processing Pipeline (Async, Offline)"
-        Orch --> Q[Task Queue (Redis/RabbitMQ)]
-        Q --> W1[Ingest Worker (Hashing, Scanning)]
-        Q --> W2[Normalize Worker (Persian NLP)]
-        Q --> W3[Embed Worker (ONNX, Quantized)]
-      
-        W1 -- Read/Write --> Blob[MinIO (Raw Files, Normalized Text)]
-        W2 -- Process --> NLP[Multilingual NLP Module (Hazm/DadmaTools)]
-        W3 -- Inference --> Models[Local Model Registry (HuggingFace/ONNX Files)]
-    end
+   subgraph "Storage & Catalog Plane"
+       W1 -- Metadata --> DB[(PostgreSQL - Metadata, Schemas, Catalog)]
+       W3 -- Vectors/Keywords --> VDB[(Hybrid Vector DB - Qdrant/OpenSearch)]
+       DB -- CDC/Sync --> VDB[Index Version Registry]
+   end
   
-    subgraph "Storage & Indexing Plane"
-        W1 -- Metadata --> DB[(PostgreSQL - Metadata, Schemas)]
-        W3 -- Vectors/Keywords --> VDB[(Hybrid Vector DB - Qdrant/OpenSearch)]
-        DB -- CDC/Sync --> VDB[Index Version Registry]
-    end
+   subgraph "Retrieval & Query Plane"
+       API --> Search[Search Service (Query Planner)]
+       Search --> VDB
+       Search --> DB[ACL Filters]
+       Search --> Models[Re-ranker]
+   end
   
-    subgraph "Retrieval & Query Plane"
-        API --> Search[Search Service (Query Planner)]
-        Search --> VDB
-        Search --> DB[ACL Filters]
-        Search --> Models[Re-ranker]
-    end
+   subgraph "Governance & Observability"
+       Orch --> Gov[Governance Engine (ACL, Audit)]
+       All[All Components] --> Obs[Observability Stack (Prometheus/Loki)]
+   end
   
-    subgraph "Governance & Observability"
-        Orch --> Gov[Governance Engine (ACL, Audit)]
-        All[All Components] --> Obs[Observability Stack (Prometheus/Loki)]
-    end
-  
-    Obs --> Dash[Local Dashboard (Grafana)]
+   Obs --> Dash[Local Dashboard (Grafana)]
 ```
 
 **Key Connections:**
 
-- **Data Flow:** Unidirectional from Ingestion to Storage/Retrieval; normalized text is stored separately for offline re-embedding without re-parsing.
+- **Data Flow:** Unidirectional from Ingestion → Data Lake (Raw/Processed/Curated) → Indexing/Retrieval; normalized text and Parquet stored in Data Lake for offline re-embedding without re-parsing. **Data Lake is Source of Truth** — all indexes rebuildable from it.
 - **Control Flow:** Orchestrator triggers jobs via queues; governance intercepts all flows for compliance.
 - **Background Pipelines:** Dedicated queues for re-indexing/migration, running in low-priority mode to avoid CPU contention.
 - **Index Routing:** Queries route to the "active" index version via PostgreSQL registry; during migrations, a router proxies to both old/new indexes for zero-downtime.
@@ -273,11 +276,13 @@ graph TD
 
 ---
 
-## Q. Storage & Data Schema Design
+## Q. Storage & Data Schema Design (Foundational Data Lake Layer)
 
-- **Raw File Storage Layout:** MinIO buckets: `raw/docs`, versioned objects.
-- **Processed Text Storage:** Bucket `normalized/text`; JSON per chunk with lang tag.
-- **Metadata Schema (SQL):**
+- **Raw Zone (`minio://raw/`):** Immutable raw files (PDF, DOCX, database dumps). Versioned objects with 90-day retention. Partitioned by `source=` and `ingest_date=`.
+- **Processed Zone (`minio://processed/`):** Normalized text (JSON per chunk with lang tag), Parquet tables from database extracts. Partitioned by `date=YYYY/MM` + `source=erp/crm/hr`. Compressed with zstd.
+- **Curated / Entity Zone (`minio://curated/`):** Entity-Centric Documents (Rich Documents) — denormalized business entities (Customer, Order, Product) as JSON/Parquet for direct RAG consumption.
+
+- **Metadata Schema (SQL / Catalog):**
   ```sql
   CREATE TABLE documents (
       id UUID PRIMARY KEY,
@@ -286,18 +291,32 @@ graph TD
       lang ENUM('fa', 'en', 'mixed'),
       metadata JSONB,
       acl_groups TEXT[],
-      versions JSONB -- array of {version_id, timestamp}
+      versions JSONB, -- array of {version_id, timestamp}
+      zone ENUM('raw', 'processed', 'curated'), -- Data Lake zone
+      partition_path TEXT -- e.g., source=erp/date=2025/10/
   );
   CREATE TABLE chunks (
       id UUID PRIMARY KEY,
       doc_id UUID REFERENCES documents,
       chunk_text TEXT,
       norm_text TEXT, -- Persian-normalized
-      embedding_version VARCHAR
+      embedding_version VARCHAR,
+      entity_id UUID NULL, -- FK to entity in Curated Zone
+      entity_type TEXT NULL -- customer/order/product
   );
+  CREATE TABLE entities (
+      id UUID PRIMARY KEY,
+      entity_type TEXT, -- customer, order, product
+      business_key TEXT, -- natural key from source system
+      entity_doc_path TEXT, -- path in MinIO curated/
+      metadata JSONB, -- denormalized attributes
+      created_at TIMESTAMP,
+      updated_at TIMESTAMP
+  );
+  CREATE INDEX idx_chunks_entity ON chunks(entity_id) WHERE entity_id IS NOT NULL;
   ```
-- **Vector DB Schema:** Collections with fields: `id`, `vector`, `payload` (incl. `lang`, `acl`).
-- **Index Version Registry Schema:** Table with `version_tag`, `model_hash`, `build_date`.
+- **Vector DB Schema:** Collections with fields: `id`, `vector`, `payload` (incl. `lang`, `acl`, `entity_id`, `entity_type`).
+- **Index Version Registry Schema:** Table with `version_tag`, `model_hash`, `build_date`, `source_zone`.
 - **Deduplication Registry:** Table mapping duplicate chunks to canonical IDs.
 
 ---

@@ -125,12 +125,12 @@ company-data/
 - مستندسازی نسبتاً کامل
 
 ### شکاف‌های شناسایی‌شده نسبت به گفت‌وگو
-1. نبود تعریف صریح Data Lake
-2. پوشش ضعیف داده‌های ساختاریافته (دیتابیس‌ها)
-3. نبود رویکرد Entity-Centric Documents
-4. امنیت و کنترل دسترسی قابل تقویت
-5. حاکمیت داده (Catalog و Lineage) قابل بهبود
-6. نبود قابلیت Lakehouse / SQL روی داده‌های ذخیره‌شده
+1. نبود تعریف صریح Data Lake — **حل شد: لایه Foundation در معماری ۷ لایه**
+2. پوشش ضعیف داده‌های ساختاریافته (دیتابیس‌ها) — **در حال پیاده‌سازی: Partitioned Parquet در Processed Zone**
+3. نبود رویکرد Entity-Centric Documents — **Spike در Sprint 5-6 (SINA_SprintPlan_v1.5)**
+4. امنیت و کنترل دسترسی قابل تقویت — **MinIO IAM per zone در Sprint 3-4؛ Keycloak در Phase 3**
+5. حاکمیت داده (Catalog و Lineage) قابل بهبود — **PostgreSQL Catalog در Phase 1؛ Lineage در Sprint 9-10**
+6. نبود قابلیت Lakehouse / SQL روی داده‌های ذخیره‌شده — **DuckDB/Trino PoC در Sprint 5-6؛ Iceberg در Phase 3**
 
 ---
 
@@ -212,20 +212,84 @@ Data Lake به‌عنوان **لایه بنیادین ذخیره‌سازی (Fou
 - [x] جایگذاری به‌عنوان لایه بنیادین ذخیره‌سازی تأیید شد
 - [x] رابطه با لایه‌های دیگر Clarified شد
 - [x] ابزارهای پیشنهادی مشخص شد
-- [ ] ساختار دقیق Buckets و پوشه‌ها در MinIO
-- [ ] جزئیات Pipeline داده‌های دیتابیسی
-- [ ] نحوه یکپارچه‌سازی Entity-Centric Documents
-- [ ] به‌روزرسانی فایل‌های مستندات پروژه
+- [x] ساختار Buckets (Raw/Processed/Curated) + Partitioning Convention در Sprint 3-4
+- [x] جزئیات Pipeline داده‌های دیتابیسی (Parquet + Partitioning) در Sprint 3-4
+- [x] نحوه یکپارچه‌سازی Entity-Centric Documents — **Spike در Sprint 5-6**
+- [ ] به‌روزرسانی فایل‌های مستندات پروژه — **در حال انجام**
+- [ ] MinIO IAM Policies per zone — **Sprint 3-4**
+- [ ] Catalog قرار (PostgreSQL به عنوان Metadata Catalog در Phase 1؛ Hive Metastore/Iceberg در Phase 3)
+- [ ] Data Lineage Tracking — **Sprint 9-10**
+- [ ] Lakehouse évolution (Apache Iceberg) — **Phase 3**
 
 ---
 
-## ۱۱. گام‌های بعدی پیشنهادی
+## ۱۱. ملاحظات Persian-First در Data Lake
 
-1. توافق روی ساختار پوشه‌بندی داخل MinIO
-2. طراحی دقیق جریان داده‌های دیتابیسی (Parquet)
-3. تعریف محل قرارگیری Entity Documents
-4. شروع به‌روزرسانی تدریجی فایل‌های معماری پروژه
+### ۱۱.۱ Encoding و Filename Handling
+- تمام نام‌های فایل و مسیرهای MinIO باید UTF-8 باشند
+- Container/OS level: `LANG=C.UTF-8` در Docker Compose برای جلوگیری از corruption نام فایل‌های RTL
+- MinIO Console و API از UTF-8 native پشتیبانی می‌کنند — نیاز به config اضافه نیست
+
+### ۱۱.۲ Normalization در Pipeline (Raw → Processed)
+- **ZWNJ (U+200C) Unification:** پیش از ذخیره در Processed Zone، تمام نیم‌فاصله‌ها یکپارچه شوند (حذف یا تبدیل به space استاندارد)
+- **ی/ک عربی → فارسی:** Mapping table برای تبدیل کدپوینت‌های عربی به فارسی (U+06CC → U+06A9، U+064A → U+06A9)
+- **اعداد:** اعداد عربی/هندی → فارسی/انگلیسی (پایین‌ریزی به context)
+- **NFKC Normalization:** اعمال روی کل متن پیش از Chunking و Embedding
+
+### ۱۱.۳ Partitioning با درک زبان
+- Partition Keyها باید language-aware باشند: `lang=fa` به علاوه `date=`
+- برای داده‌های mixed: `lang=mixed` + sub-partition بر اساس language detection per row
+
+### ۱۱.۴ Entity Document در Curated Zone
+- Entity Documents باید **Rich Persian Documents** باشند:
+  - متن کامل موجودیت با نرمال‌سازی کامل
+  - متادیتای زبان (`lang: 'fa'`) و جهت (`dir: 'rtl'`)
+  - Filters جستجو: ACL، entity_type، business_key
+- برای RAG: Entity Documents مستقیماً به عنوان context در LLM Prompt inject می‌شوند
+
+### ۱۱.۵ Catalog و Metadata
+- PostgreSQL Catalog: ستون `lang` و `script_direction` در تمام جداول
+- Full-text Search در Catalog: استفاده از Persian Stemmer (Hazm/DadmaTools) برای discoverability موجودیت‌ها
 
 ---
 
-*این سند خلاصه‌ای از گفت‌وگوهای انجام‌شده تا تاریخ ۲ نوامبر ۲۰۲۶ است و مبنای ادامه کار برای یکپارچه‌سازی Data Lake با معماری هفت‌لایه پروژه قرار می‌گیرد.*
+## ۱۲. تصمیم Catalog: PostgreSQL vs Hive Metastore
+
+**تصمیم Phase 1: PostgreSQL به عنوان Metadata Catalog**
+- **علت:** هم‌اکنون PostgreSQL برای Metadata اسناد وجود دارد؛ اضافه کردن جداول Catalog (entities، partitions، schemas) بدون dependency جدید امکان‌پذیر است
+- **Schema Catalog در PostgreSQL:**
+  ```sql
+  CREATE TABLE lake_schemas (
+      id UUID PRIMARY KEY,
+      zone TEXT, -- raw/processed/curated
+      source TEXT, -- erp/crm/hr/manual
+      schema_json JSONB, -- Parquet schema (fields, types)
+      partition_keys TEXT[], -- e.g., ['date', 'source']
+      created_at TIMESTAMP,
+      version INTEGER
+  );
+  CREATE TABLE lake_partitions (
+      id UUID PRIMARY KEY,
+      schema_id UUID REFERENCES lake_schemas,
+      partition_values JSONB, -- e.g., {"date": "2025-10", "source": "erp"}
+      path TEXT, -- MinIO path
+      row_count BIGINT,
+      size_bytes BIGINT,
+      created_at TIMESTAMP
+  );
+  ```
+- **Migration Path به Phase 3:** وقتی Volume و Concurrency بالا رفت، به **Apache Iceberg + Hive Metastore (या Nessie)** migrate می‌کنیم. PostgreSQL Catalog داده‌ها را به صورت Iceberg Tables expose می‌کند (via Trino/DuckDB).
+
+---
+
+## ۱۳. گام‌های بعدی پیشنهادی (به‌روزرسانی شده)
+
+1. **Sprint 3-4:** پیاده‌سازی Buckets (Raw/Processed/Curated) + Partitioning Convention + MinIO IAM per zone
+2. **Sprint 5-6:** Spike Entity-Centric Pipeline (تحلیل موجودیت‌ها، Schema طراحی، PoC DuckDB → Curated)
+3. **Sprint 9-10:** Data Lineage Tracking (Raw → Normalized → Embedded → Entity) + Integration Test کامل Storage
+4. **Phase 3:** Apache Iceberg روی MinIO + Hive Metastore/Nessie برای Lakehouse کامل
+5. به‌روزرسانی تدریجی فایل‌های معماری پروژه (در حال انجام)
+
+---
+
+*این سند خلاصه‌ای از گفت‌وگوهای انجام‌شده تا تاریخ ۹ نوامبر ۲۰۲۶ است و مبنای ادامه کار برای یکپارچه‌سازی Data Lake با معماری هفت‌لایه پروژه قرار می‌گیرد.*
