@@ -1,5 +1,5 @@
-Version: 1.2
-Updated: ۱۴۰۴/۰۸/۱۸ (2026-11-09)
+Version: 1.3
+Updated: ۱۴۰۴/۰۸/۱۹ (2026-11-10)
 
 # Enterprise AI Infrastructure: Document Intelligence & RAG Ecosystem
 
@@ -135,7 +135,7 @@ graph TD
 1. **Document Ingestion:** Files dropped into watched directory. Worker computes SHA-256 hash and metadata (e.g., filename, size). Offline virus scan using pre-loaded ClamAV definitions. Edge case: Corrupted file → log error, quarantine to DLQ.
 2. **Change Detection:** Query PostgreSQL for existing hash. If match, skip (idempotency). For updates, compare content fingerprint (e.g., perceptual hash for PDFs). Edge case: Persian filename encoding mismatch → normalize UTF-8 before hashing.
 3. **Parsing & Normalization:** Use layout-aware parser to extract text/tables/images. For Persian, apply RTL detection and ZWNJ unification. Edge case: Mixed-script documents → segment by language before normalization.
-4. **Chunking:** Semantic chunking with overlap (e.g., 20% window). Persian heuristics: Split at sentence boundaries using morphology-aware tools to avoid mid-word breaks. Edge case: Long RTL paragraphs → reverse chunk order for embedding alignment.
+4. **Chunking:** Semantic chunking with overlap (e.g., 20% window). Persian heuristics: Split at sentence boundaries using morphology-aware tools to avoid mid-word breaks. Edge case: Long RTL paragraphs — text/chunk order reversal is **forbidden** per ADR-011 norm-v1.0 (embedding models operate on logical order, not visual order).
 5. **Embedding Generation:** Batch chunks, embed using quantized multilingual model. Offline mode: Models loaded from local dir; no dynamic downloads. Edge case: CPU overload → fallback to smaller batches or sequential processing.
 6. **Vector Indexing:** Store embeddings in HNSW index with payload (e.g., ACLs, lang). Edge case: High-dimensional drift in Persian embeddings → monitor and trigger alert.
 7. **Hybrid Indexing:** Parallel BM25 index build with Persian tokenizers (stemming, stopwords). Edge case: Multilingual queries → route to language-specific sub-indexes.
@@ -205,13 +205,13 @@ graph TD
 
 ## I. Persian / Multilingual NLP Challenges
 
-- **Unicode Normalization:** Apply NFKC; unify Persian/Arabic variants (ي/ی, ك/ک) to Persian forms to prevent embedding fragmentation.
-- **ZWNJ (Half-Space) Handling:** Replace with standard space or preserve as token; test impact on retrieval accuracy offline.
+- **Unicode Normalization:** Apply **NFC** (not NFKC) per ADR-011 norm-v1.0. Mandatory mapping: U+064A (ي) → U+06CC (ی), U+0643 (ك) → U+06A9 (ک). Unify Persian/Arabic variants to Persian forms to prevent embedding fragmentation. See `normalization.py` (single implementation of the contract).
+- **ZWNJ (Half-Space) Handling:** **Preserve ZWNJ (U+200C) as-is**; never delete or convert to space per ADR-011 norm-v1.0. Analyzer/query path must match the canonical ZWNJ-preserved form.
 - **Character Variants:** Custom mapping table for offline use; apply pre-tokenization.
 - **Tokenization Issues:** Use morphology-aware tokenizers; handle agglutinative Persian words to avoid subword overflow.
 - **Stopword Strategy:** Curated list (e.g., from Hazm) + custom additions for domain-specific terms; bilingual lists for mixed docs.
 - **Morphology & Stemming:** Persian stemmer (e.g., DadmaTools) for BM25; reduces index size by 20-30%.
-- **RTL Considerations:** Reverse text for left-to-right embeddings; ensure query/display handles bidi.
+- **RTL Considerations:** Do **not** reverse text (forbidden by norm-v1.0); ensure query/display handles bidi over logical order.
 - **Multilingual Embedding Alignment:** Use aligned models (e.g., LaBSE); offline fine-tune if needed for Persian-English cross-lingual recall.
 - **Chunking Heuristics for Persian Text:** Sentence-based with RTL-aware boundaries; max chunk 512 tokens; overlap for context preservation.
 

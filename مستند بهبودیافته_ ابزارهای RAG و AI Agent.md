@@ -1,5 +1,5 @@
-Version: 3.0
-Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+Version: 3.1
+Updated: ۱۴۰۴/۰۸/۱۹ (2026-11-10)
 
 # مستند ابزارهای RAG و AI Agent — نسخه ۳.۰ (نهایی)
 
@@ -348,18 +348,14 @@ class PersianTextSplitter(TextSplitter):
 
     def _normalize(self, text: str) -> str:
         """
-        مرحله ۱: نرمال‌سازی
-        - یکسان‌سازی نیم‌فاصله (ZWNJ)
-        - تبدیل اعداد عربی به فارسی
-        - حذف کاراکترهای کنترلی اضافه
+        مرحله ۱: نرمال‌سازی بر اساس قرارداد norm-v1.0 (ADR-011)
+        - قالب يونيكد: NFC
+        - نگاشت اجباري: U+064A→U+06CC (ی)، U+0643→U+06A9 (ک)
+        - اعداد فارسی (۰-۹) → انگلیسی (0-9)
+        - ZWNJ (U+200C) حفظ شود؛ حذف یا تبدیل به space ممنوع
         """
-        text = self._normalizer.normalize(text)
-        # حذف کاراکترهای کنترلی به جز newline
-        text = "".join(
-            ch for ch in text
-            if unicodedata.category(ch) != "Cc" or ch == "\n"
-        )
-        return text.strip()
+        from normalization import normalize  # پیاده‌سازی واحد قرارداد norm-v1.0
+        return normalize(text)
 
     def _tokenize_sentences(self, text: str) -> List[str]:
         """
@@ -713,15 +709,9 @@ class EnterprisePersianSplitter:
             self.normalizer = Normalizer()
         
     def normalize_text(self, text: str) -> str:
-        """پاکسازی و استانداردسازی کاراکترهای فارسی"""
-        if not text: return ""
-        text = unicodedata.normalize("NFC", text)
-        if HAZM_AVAILABLE:
-            text = self.normalizer.normalize(text)
-        # اصلاح کشیدگی و فاصله‌های مضاعف
-        text = re.sub(r"ـ+", "", text)
-        text = re.sub(r" {2,}", " ", text)
-        return text.strip()
+        """پاکسازی و استانداردسازی کاراکترهای فارسی بر اساس norm-v1.0 (ADR-011)"""
+        from normalization import normalize  # پیاده‌سازی واحد قرارداد norm-v1.0
+        return normalize(text or "")
 
     def split_text(self, text: str) -> List[str]:
         """شکستن متن بر اساس منطق جملات فارسی با رعایت Overlap دقیق"""

@@ -1,3 +1,6 @@
+Version: 1.5
+Updated: ۱۴۰۴/۰۸/۱۹ (2026-11-10)
+
 # SINA — Secure Intelligent Network Assistant
 
 ## مدیریت ریسک و ارزیابی کیفیت
@@ -37,7 +40,7 @@
 | ID | دسته | ریسک | احتمال | تأثیر | سطح | استراتژی کاهش | مالک |
 |----|------|------|--------|-------|-----|----------------|------|
 | R-001 | فنی/NLP | دقت پردازش NLP فارسی پایین‌تر از انتظار (Recall < 70%) | ۴ — بالا | ۵ — بسیار بالا | بحرانی | Golden Query Set از Sprint 1 تعریف شود؛ Benchmark هر Sprint اجرا شود؛ Fallback به BM25-only در صورت افت | Backend Lead |
-| R-002 | فنی/NLP | ZWNJ handling نادرست باعث شکست جملات فارسی در Chunking | ۵ — بسیار بالا | ۴ — بالا | بحرانی | PersianTextSplitter/EnterprisePersianNormalizer (Hazm + DadmaTools) پیاده‌سازی و تست شود؛ ۵۰۰ صفحه نمونه فارسی قبل از Deploy | Backend Lead |
+| R-002 | فنی/NLP | ZWNJ handling نادرست باعث شکست جملات فارسی در Chunking | ۵ — بسیار بالا | ۴ — بالا | بحرانی | normalization.py (قرارداد norm-v1.0، ADR-011) + EnterprisePersianSplitter؛ تست وکتورهای test_normalization_vectors.py (TV-01..TV-10) قبل از Deploy | Backend Lead |
 | R-003 | سخت‌افزار | CPU Bottleneck در زمان Embedding اسناد حجیم | ۵ — بسیار بالا | ۳ — متوسط | بحرانی | Batch Processing شبانه (Cron Job)؛ Queue Priority؛ ONNX INT8 Quantization؛ Adaptive Batch Size | Backend Lead |
 | R-004 | تیم | نبود تخصص ML/AI در تیم Backend | ۵ — بسیار بالا | ۴ — بالا | بحرانی | Cross-training در Sprint 1؛ مستندات فنی دقیق؛ Pair Programming؛ Spike Story هر فاز | Backend Lead |
 | R-005 | معماری | Breaking Changes ابزارهای Haystack/LangChain/LlamaIndex | ۴ — بالا | ۴ — بالا | بحرانی | Hexagonal Architecture اجباری — همه ابزارها پشت Interface؛ Version Lock در requirements.txt؛ Upgrade فقط با Test | Backend Lead |
@@ -101,6 +104,7 @@
 |---|--------------|-----------|--------|
 | 1 | آیا هیچ import مستقیم از LangChain/LlamaIndex/Haystack در Domain Logic وجود دارد؟ | Backend Lead | ☐ |
 | 2 | آیا PersianTextSplitter / EnterprisePersianNormalizer (Hazm + DadmaTools) برای تمام متون فارسی استفاده شده؟ | Backend Dev | ☐ |
+| 2b | آیا normalization.py (قرارداد norm-v1.0، ADR-011) برای نرمال‌سازی ingest/query استفاده شده؟ | Backend Dev | ☐ |
 | 3 | آیا Thread Count برای Llama.cpp <= Physical Core Count است؟ | Backend Dev | ☐ |
 | 4 | آیا تمام خطاها Logged می‌شوند با سطح مناسب (ERROR/WARNING)? | Backend Dev | ☐ |
 | 5 | آیا هیچ Secret/Password در کد Hard-code شده؟ | Backend Lead | ☐ |
@@ -109,12 +113,13 @@
 | 8 | آیا Batch Size برای CPU بهینه شده (نه بزرگتر از ۳۲)؟ | Backend Dev | ☐ |
 | 9 | آیا SHA-256 Verification برای مدل‌های لود شده انجام می‌شود؟ | Backend Lead | ☐ |
 | 10 | آیا Unit Test برای Edge Case‌های فارسی (ZWNJ، ی/ک عربی) نوشته شده؟ | Backend Dev | ☐ |
+| 10b | آیا test_normalization_vectors.py (TV-01..TV-10: ZWNJ، ی/ک، اعداد، NFC) اجرا شده؟ | Backend Dev | ☐ |
 
 ---
 
 ## ۵. QA ویژه زبان فارسی
 
-بزرگترین چالش کیفی SINA پردازش صحیح زبان فارسی است. این بخش Test Case‌های اختصاصی فارسی را تعریف می‌کند. *ابزارهای مرجع در نقشه راه: Hazm + DadmaTools، Persian-aware Chunking، NFKC Normalization.*
+بزرگترین چالش کیفی SINA پردازش صحیح زبان فارسی است. این بخش Test Case‌های اختصاصی فارسی را تعریف می‌کند. *ابزارهای مرجع در نقشه راه: Hazm + DadmaTools، Persian-aware Chunking، NFC Normalization (norm-v1.0، ADR-011).*
 
 ### ۵.۱ Test Caseهای اجباری NLP فارسی
 
@@ -126,7 +131,7 @@
 | TC-04 | Overlap صحیح فارسی | سند ۱۰۰۰ کاراکتری با overlap 200 | ۲ جمله آخر Chunk قبلی در Chunk بعدی |
 | TC-05 | جستجوی ZWNJ-aware | Query: «نیمفاصله» (بدون نیم‌فاصله) | نتیجه: اسنادی که «نیم‌فاصله» دارند پیدا می‌شوند |
 | TC-06 | Embedding فارسی منسجم | دو جمله هم‌معنی با کلمات متفاوت | Cosine Similarity > 0.85 |
-| TC-07 | کاراکتر کنترلی در متن | متن با کاراکترهای U+200C, U+200B اضافی | حذف شده، متن تمیز |
+| TC-07 | کاراکتر کنترلی در متن | متن با کاراکترهای U+200C, U+200B اضافی | U+200B و کاراکترهای کنترلی حذف شده؛ U+200C (ZWNJ) **حفظ می‌شود** (norm-v1.0)، متن تمیز |
 | TC-08 | اعداد فارسی-عربی | «۱۲۳» vs «123» | هر دو به یک نتیجه ختم می‌شوند |
 | TC-09 | متن ترکیبی فارسی-انگلیسی | جمله: «The سیاست کلی است» | تشخیص زبان ترکیبی، Chunking حفظ هر دو |
 | TC-10 | RTL در Filename | فایل با نام فارسی: «گزارش مالی.pdf» | Hash صحیح محاسبه، UTF-8 در PostgreSQL |

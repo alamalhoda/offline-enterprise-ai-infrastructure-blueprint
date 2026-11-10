@@ -1,5 +1,5 @@
-Version: 1.0
-Updated: ۱۴۰۴/۰۸/۱۶ (2026-11-07)
+Version: 1.1
+Updated: ۱۴۰۴/۰۸/۱۹ (2026-11-10)
 
 # خلاصه گفت‌وگو: آشنایی با Data Lake و افزودن آن به پروژه
 ## offline-enterprise-ai-infrastructure-blueprint
@@ -236,10 +236,10 @@ Data Lake لایه بنیادین مستقل است و لایه‌های بال�
 - MinIO Console و API از UTF-8 native پشتیبانی می‌کنند — نیاز به config اضافه نیست
 
 ### ۱۱.۲ Normalization در Pipeline (Raw → Processed)
-- **ZWNJ (U+200C) Unification:** پیش از ذخیره در Processed Zone، تمام نیم‌فاصله‌ها یکپارچه شوند (حذف یا تبدیل به space استاندارد)
-- **ی/ک عربی → فارسی:** Mapping table برای تبدیل کدپوینت‌های عربی به فارسی (U+06CC → U+06A9، U+064A → U+06A9)
-- **اعداد:** اعداد عربی/هندی → فارسی/انگلیسی (پایین‌ریزی به context)
-- **NFKC Normalization:** اعمال روی کل متن پیش از Chunking و Embedding
+- **ZWNJ (U+200C) Preservation:** پیش از ذخیره در Processed Zone، ZWNJ (U+200C) **حفظ شود**; حذف یا تبدیل به space استاندارد **ممنوع** است (norm-v1.0, ADR-011).
+- **ی/ک عربی → فارسی:** Mapping table برای تبدیل کدپوینت‌های عربی به فارسی: **U+064A → U+06CC، U+0643 → U+06A9** (norm-v1.0, ADR-011).
+- **اعداد:** اعداد فارسی (۰-۹) → اعداد انگلیسی (0-9) (norm-v1.0, ADR-011).
+- **NFC Normalization:** اعمال **NFC** (NFKC نیست) روی کل متن پیش از Chunking و Embedding (norm-v1.0, ADR-011).
 
 ### ۱۱.۳ Partitioning با درک زبان
 - Partition Keyها باید language-aware باشند: `lang=fa` به علاوه `date=`
