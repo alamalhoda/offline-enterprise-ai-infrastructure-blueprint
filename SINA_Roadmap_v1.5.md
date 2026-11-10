@@ -6,7 +6,7 @@
 
 | مورد | مقدار |
 |------|--------|
-| نسخه مستند | 1.5 — تلفیقی (از RoadMap v1.0 + RoadMap v2.0) |
+| نسخه مستند | 2.0 — تلفیقی (از RoadMap v1.0 + RoadMap v2.0) |
 | تاریخ تهیه | بهمن ۱۴۰۴ / فوریه ۲۰۲۶ |
 | محیط هدف | Air-Gapped / CPU-Only / آفلاین |
 | افق زمانی | فاز صفر ۴ هفته + ۱۸+ ماه (۴ فاز اصلی) |
@@ -63,7 +63,7 @@
 | **Phase 3** | Enterprise Hardening | ماه ۱۲–۱۵ | RBAC، Audit، Observability، Backup، Production v1.0 | **Gate 2** |
 | **Phase 4** | Optimization & Scale | ماه ۱۶+ | DSPy، Agent، Fine-tune، Scale | — |
 
-هیچ فازی بدون **تأیید صریح Gate** (در جاهایی که تعریف شده) شروع نمی‌شود. جزئیات Sprintها و User Storyها در **SINA_SprintPlan_v1.0** آمده است.
+هیچ فازی بدون **تأیید صریح Gate** (در جاهایی که تعریف شده) شروع نمی‌شود. جزئیات Sprintها و User Storyها در **SINA_SprintPlan_v1.5** آمده است.
 
 ---
 
@@ -94,7 +94,7 @@
 | QG0.4 | نصب آفلاین از PyPI Mirror کار می‌کند | بدون نیاز به اینترنت | Backend Lead |
 | QG0.5 | CI Pipeline در هر Push اجرا می‌شود | حداکثر ۵ دقیقه | Tech Lead |
 
-**نتیجه Gate 0:** ✅ همه معیارها → Phase 1 شروع | ⚠️ ۱–۲ مورد ناموفق → تمدید تا ۱ هفته | ❌ بیش از ۲ مورد → بازبینی Stack. *ارزیابی Gate 0 پس از Sprint 2 در برنامه Sprint (SINA_SprintPlan_v1.0) انجام می‌شود.*
+**نتیجه Gate 0:** ✅ همه معیارها → Phase 1 شروع | ⚠️ ۱–۲ مورد ناموفق → تمدید تا ۱ هفته | ❌ بیش از ۲ مورد → بازبینی Stack. *ارزیابی Gate 0 پس از Sprint 2 در برنامه Sprint (SINA_SprintPlan_v1.5) انجام می‌شود.*
 
 ---
 
@@ -116,13 +116,13 @@
 | Milestone | ماه | Definition of Done |
 |-----------|-----|---------------------|
 | M1.1 — Dev Env | ۱ | Docker Compose up بدون خطا، تمام service‌ها healthy |
-| M1.2 — Storage | ۲ | MinIO، PostgreSQL schema، Qdrant collection آماده؛ Integration Test اولیه (ذخیره/بازیابی) موفق. *Integration Test کامل و Data Quality در S9–S10 (برنامه Sprint) تکمیل می‌شود.* |
+| M1.2 — Storage & Data Lake Foundation | ۲ | MinIO با Bucketهای **raw/، processed/، curated/** + Versioning و Retention Policy؛ Partitioning Convention برای Parquet (date+source)؛ MinIO IAM Policies اولیه per zone؛ PostgreSQL schema، Qdrant collection آماده؛ Integration Test اولیه (ذخیره/بازیابی) موفق. *Integration Test کامل و Data Quality در S9–S10 (برنامه Sprint) تکمیل می‌شود.* |
 | M1.3 — Ingestion | ۳ | PDF/DOCX فارسی آپلود → hash → scan → Queue |
-| M1.4 — NLP | ۴ | متن نرمال‌سازی، ZWNJ حل شده، Chunk‌های معنادار |
+| M1.4 — NLP & Entity-Centric Pipeline Design | ۴ | متن نرمال‌سازی، ZWNJ حل شده، Chunk‌های معنادار؛ **Spike Story: طراحی Pipeline تبدیل جداول نرمال‌شده به Entity Document در Curated Zone** |
 | M1.5 — Embedding | ۵ | مدل ONNX لود، Batch Embedding روی CPU < 5 ثانیه برای ۱۰ chunk |
 | M1.6 — E2E Alpha | ۶ | فایل فارسی → embed → Qdrant → query اولیه جواب دهد |
 
-**نگاشت با برنامه Sprint (SINA_SprintPlan_v1.0):** M0.1/M0.2 → S1–S2؛ M1.1 → S1–S2؛ M1.2/M1.3 → S3–S4؛ M1.4 → S5–S6؛ M1.5 → S7–S8؛ Storage Integration & Data Quality → S9–S10؛ M1.6 → S11–S12.
+**نگاشت با برنامه Sprint (SINA_SprintPlan_v1.5):** M0.1/M0.2 → S1–S2؛ M1.1 → S1–S2؛ M1.2/M1.3 → S3–S4؛ M1.4 → S5–S6؛ M1.5 → S7–S8؛ Storage Integration & Data Quality → S9–S10؛ M1.6 → S11–S12.
 
 ### ۵.۳ Stack فنی فاز ۱
 
@@ -299,4 +299,4 @@
 
 ---
 
-*مستند تلفیقی: SINA Roadmap Unified v1.0 | بهمن ۱۴۰۴ / فوریه ۲۰۲۶*
+*مستند تلفیقی: SINA Roadmap Unified v2.0 | بهمن ۱۴۰۴ / فوریه ۲۰۲۶*

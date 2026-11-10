@@ -130,30 +130,32 @@ Phase 1 از ماه ۱ (هفته ۵) شروع می‌شود — بلافاصله
 
 | مورد | مقدار |
 |------|--------|
-| **Sprint Goal** | فایل PDF/DOCX فارسی آپلود شود، hash بخورد، scan شود و در Queue قرار گیرد؛ Storage پایه آماده باشد |
+| **Sprint Goal** | فایل PDF/DOCX فارسی آپلود شود، hash بخورد، scan شود و در Queue قرار گیرد؛ **Data Lake zonas (Raw/Processed/Curated) با Partitioning و IAM Policies پایه راه‌اندازی شود** |
 | **بازه زمانی** | هفته ۵–۸ (ماه ۱–۲) |
-| **نقشه راه v1.5** | M1.1: Docker Compose healthy. M1.2a: MinIO bucket، PostgreSQL schema، Qdrant collection؛ ذخیره/بازیابی ساده موفق. M1.3: PDF/DOCX → hash → scan → Queue. |
+| **نقشه راه v1.5** | M1.1: Docker Compose healthy. M1.2a: MinIO Bucketهای **raw/، processed/، curated/** + Versioning و Retention Policy؛ Partitioning Convention برای Parquet (date+source)؛ MinIO IAM Policies اولیه per zone؛ PostgreSQL schema، Qdrant collection؛ ذخیره/بازیابی ساده موفق. M1.3: PDF/DOCX → hash → scan → Queue. |
 
 | # | User Story / Task | تیم | SP | Acceptance Criteria |
 |---|-------------------|-----|-----|---------------------|
-| 1 | راه‌اندازی MinIO Bucket و PostgreSQL Schema (documents, chunks, audit_log) | Backend | 3 | Bucket آماده؛ Schema migration موفق؛ CRUD تست شده |
-| 2 | راه‌اندازی Qdrant Collection و ذخیره/بازیابی یک Vector آزمایشی | Backend | 3 | Collection ایجاد؛ یک بردار ذخیره و بازیابی موفق |
-| 3 | پیاده‌سازی File Upload Endpoint با MIME Validation | Backend | 3 | فقط PDF/DOCX قبول می‌شود؛ فایل در MinIO ذخیره می‌شود |
-| 4 | SHA-256 Hashing و Idempotency Check | Backend | 3 | فایل تکراری → لینک قبلی برمی‌گردد؛ پردازش تکراری نمی‌شود |
-| 5 | اتصال ClamAV برای Offline Virus Scan | Backend | 5 | فایل آلوده → Quarantine؛ فایل سالم → Queue؛ ثبت در audit_log |
-| 6 | پیاده‌سازی Task Queue با Celery + Redis | Backend | 5 | Task ارسال، پردازش، نتیجه در PostgreSQL ثبت می‌شود |
-| 7 | Dead Letter Queue برای خطاها | Backend | 3 | پس از ۳ Retry → DLQ؛ ثبت با جزئیات در audit_log |
-| 8 | پیاده‌سازی Directory Watcher با Watchdog | Backend | 3 | فایل جدید در پوشه watched → خودکار به Queue اضافه می‌شود |
+| 1 | راه‌اندازی MinIO Buckets: **raw/، processed/، curated/** + Versioning و Retention Policy (90 روز) | Backend | 5 | سه Bucket آماده؛ Versioning فعال؛ Retention Rule 90 روز اعمال شده |
+| 2 | تعریف Partitioning Convention برای Parquet در processed/curated (date=YYYY/MM + source=erp/crm/hr) | Backend | 3 | Convention مستند شده؛ Sample Parquet در مسیر صحیح Partition ذخیره می‌شود |
+| 3 | پیاده‌سازی MinIO IAM Policies اولیه per zone (Read/Write per Service Account) | Backend | 3 | Service Accountها فقط به zone مربوطه دسترسی دارند؛ Audit Log فعال |
+| 4 | راه‌اندازی PostgreSQL Schema (documents, chunks, audit_log) و Qdrant Collection | Backend | 3 | Schema migration موفق؛ CRUD تست شده؛ Qdrant Collection آماده |
+| 5 | پیاده‌سازی File Upload Endpoint با MIME Validation | Backend | 3 | فقط PDF/DOCX قبول می‌شود؛ فایل در MinIO **raw/** ذخیره می‌شود |
+| 6 | SHA-256 Hashing و Idempotency Check | Backend | 3 | فایل تکراری → لینک قبلی برمی‌گردد؛ پردازش تکراری نمی‌شود |
+| 7 | اتصال ClamAV برای Offline Virus Scan | Backend | 5 | فایل آلوده → Quarantine؛ فایل سالم → Queue؛ ثبت در audit_log |
+| 8 | پیاده‌سازی Task Queue با Celery + Redis | Backend | 5 | Task ارسال، پردازش، نتیجه در PostgreSQL ثبت می‌شود |
+| 9 | Dead Letter Queue برای خطاها | Backend | 3 | پس از ۳ Retry → DLQ؛ ثبت با جزئیات در audit_log |
+| 10 | پیاده‌سازی Directory Watcher با Watchdog | Backend | 3 | فایل جدید در پوشه watched → خودکار به Queue اضافه می‌شود |
 
 ---
 
-### Sprint 5–6: Persian NLP Pipeline (M1.4)
+### Sprint 5–6: Persian NLP Pipeline & Entity-Centric Design (M1.4)
 
 | مورد | مقدار |
 |------|--------|
-| **Sprint Goal** | متن فارسی از فایل خام استخراج، نرمال‌سازی و تقسیم‌بندی معنادار شود |
+| **Sprint Goal** | متن فارسی از فایل خام استخراج، نرمال‌سازی و تقسیم‌بندی معنادار شود؛ **Spike: طراحی Pipeline تبدیل جداول نرمال‌شده به Entity Document در Curated Zone** |
 | **بازه زمانی** | هفته ۹–۱۲ (ماه ۳) |
-| **نقشه راه v1.5** | M1.4: متن نرمال‌سازی، ZWNJ حل شده، Chunk‌های معنادار تولید می‌شوند. |
+| **نقشه راه v1.5** | M1.4: متن نرمال‌سازی، ZWNJ حل شده، Chunk‌های معنادار تولید می‌شوند. **Spike Story: طراحی Pipeline تبدیل جداول نرمال‌شده به Entity Document در Curated Zone** |
 
 | # | User Story / Task | تیم | SP | Acceptance Criteria |
 |---|-------------------|-----|-----|---------------------|
@@ -163,6 +165,8 @@ Phase 1 از ماه ۱ (هفته ۵) شروع می‌شود — بلافاصله
 | 4 | پیاده‌سازی PersianTextSplitter (Chunk-aware RTL) | Backend | 5 | جملات فارسی از وسط نمی‌شکنند؛ Overlap رعایت می‌شود |
 | 5 | تست Chunking با Golden Dataset فارسی (۵۰۰ صفحه) | Backend/QA | 3 | < 5% Chunk نامعنادار؛ نتایج در PostgreSQL ثبت می‌شوند |
 | 6 | ذخیره Chunk‌ها در PostgreSQL با metadata کامل | Backend | 3 | هر Chunk با doc_id، position، lang، page_num ذخیره می‌شود |
+| 7 | **Spike: تحلیل موجودیت‌های کسب‌وکاری (Customer, Order, Product) و طراحی Entity Document Schema برای Curated Zone** | Backend/PO | 5 | موجودیت‌های اصلی شناسایی؛ Schema پیش‌نویس Entity Document (Parquet/JSON) در Curated Zone تعریف شده؛ معیار انتخاب موجودیت مستند شده |
+| 8 | **Spike: PoC تبدیل نرمال‌شده (Parquet در processed/) → Entity Document در curated/ با DuckDB** | Backend | 3 | Query DuckDB روی processed Parquet → Entity Document تولید → ذخیره در MinIO curated/؛ مثال کارکرد برای Customer/Order/Product |
 
 ---
 
